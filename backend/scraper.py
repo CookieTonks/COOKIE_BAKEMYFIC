@@ -1,8 +1,15 @@
 import re
+import time
 from dataclasses import dataclass
 
 import requests
 from bs4 import BeautifulSoup
+
+_UA = (
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+    "AppleWebKit/537.36 (KHTML, like Gecko) "
+    "Chrome/124.0.0.0 Safari/537.36"
+)
 
 
 def extract_work_id(url: str) -> int:
@@ -29,22 +36,54 @@ class WorkData:
 
 def _fetch_html(work_id: int) -> str:
     sess = requests.Session()
-    sess.headers["User-Agent"] = "Mozilla/5.0 ao3-epub-tool"
+    sess.headers.update({
+        "User-Agent": _UA,
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "es-ES,es;q=0.9,en;q=0.8",
+    })
 
     url = f"https://archiveofourown.org/works/{work_id}?view_full_work=true"
-    r = sess.get(url, timeout=90)
 
-    if "This work could have adult content" in r.text:
-        r = sess.get(url + "&view_adult=true", timeout=90)
+    for attempt in range(3):
+        try:
+            r = sess.get(url, timeout=90)
+        except requests.Timeout:
+            if attempt < 2:
+                time.sleep(8)
+                continue
+            raise RuntimeError("AO3 tardó demasiado en responder. Intenta de nuevo en unos segundos.")
+        except requests.ConnectionError:
+            if attempt < 2:
+                time.sleep(5)
+                continue
+            raise RuntimeError("No se pudo conectar con AO3. Verifica tu conexión a internet.")
 
-    if r.status_code == 404:
-        raise LookupError(f"Obra {work_id} no encontrada en AO3.")
-    if "This work is only available to registered users" in r.text:
-        raise PermissionError("Esta obra requiere iniciar sesión en AO3.")
-    if r.status_code != 200:
-        raise RuntimeError(f"AO3 respondió con HTTP {r.status_code}")
+        if r.status_code == 429:
+            wait = int(r.headers.get("Retry-After", 20))
+            if attempt < 2:
+                time.sleep(wait)
+                continue
+            raise RuntimeError("AO3 está limitando las peticiones. Espera unos segundos e inténtalo de nuevo.")
 
-    return r.text
+        if r.status_code in (503, 502):
+            if attempt < 2:
+                time.sleep(10)
+                continue
+            raise RuntimeError(f"AO3 no está disponible en este momento (HTTP {r.status_code}). Intenta más tarde.")
+
+        if "This work could have adult content" in r.text:
+            r = sess.get(url + "&view_adult=true", timeout=90)
+
+        if r.status_code == 404:
+            raise LookupError(f"Obra {work_id} no encontrada en AO3.")
+        if "This work is only available to registered users" in r.text:
+            raise PermissionError("Esta obra requiere iniciar sesión en AO3.")
+        if r.status_code != 200:
+            raise RuntimeError(f"AO3 respondió con HTTP {r.status_code}. Intenta de nuevo.")
+
+        return r.text
+
+    raise RuntimeError("No se pudo conectar con AO3 tras varios intentos. Intenta más tarde.")
 
 
 def _text(tag) -> str:

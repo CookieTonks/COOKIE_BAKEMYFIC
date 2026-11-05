@@ -49,7 +49,7 @@ input::placeholder{color:var(--text-soft);}
 
       <div style="flex:0 0 320px;display:flex;flex-direction:column;align-items:center;gap:26px;">
         <div style="text-align:center;">
-          <div style="font-size:36px;font-weight:800;line-height:1.08;background:var(--grad-hero);-webkit-background-clip:text;background-clip:text;color:transparent;">Tu fic,<br>hecho libro.</div>
+          <div style="font-size:36px;font-weight:800;line-height:1.08;background:var(--grad-hero);-webkit-background-clip:text;background-clip:text;color:transparent;">De AO3,<br>a tu kindle.</div>
           <p style="font-size:14.5px;color:var(--text-muted);line-height:1.6;margin:14px 0 0;max-width:300px;">Pega el enlace de AO3, elige una portada y descárgalo en EPUB —listo para tu Kindle.</p>
         </div>
         <div style="perspective:1300px;">
@@ -99,12 +99,12 @@ input::placeholder{color:var(--text-soft);}
 
           <sc-if value="{{ link }}" hint-placeholder-val="{{ true }}">
             <div style="animation:fadeUp .5s ease both;">
-              <h3 style="font-size:21px;font-weight:700;margin:0 0 6px;color:var(--text);">Pega el enlace de tu fic</h3>
+              <h3 style="font-size:21px;font-weight:700;margin:0 0 6px;color:var(--text);">Pega el enlace de la fic.</h3>
               <p style="font-size:14px;color:var(--text-muted);margin:0 0 18px;">Cópialo desde la barra del navegador en AO3.</p>
               <input value="{{ url }}" onChange="{{ onUrl }}" placeholder="https://archiveofourown.org/works/123456" style="width:100%;padding:15px 16px;border-radius:15px;border:1.5px solid var(--glass-brd);background:var(--card-bg);color:var(--text);font-family:'Poppins';font-size:14.5px;outline:none;transition:border-color .2s,box-shadow .2s;" style-focus="border-color:var(--violet);box-shadow:0 0 0 4px rgba(120,94,220,.14);"/>
               <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;">
-                <button onClick="{{ start }}" style="display:inline-flex;align-items:center;gap:8px;background:var(--grad-btn);color:#fff;border:none;border-radius:50px;padding:13px 24px;font-family:'Poppins';font-weight:600;font-size:14.5px;cursor:pointer;box-shadow:0 12px 26px -10px rgba(120,94,220,.85);transition:transform .2s,box-shadow .2s;" style-hover="transform:translateY(-2px);box-shadow:0 18px 34px -10px rgba(120,94,220,.95);">Buscar fic →</button>
-                <button onClick="{{ useExample }}" style="background:transparent;color:var(--violet);border:1.5px solid var(--glass-brd);border-radius:50px;padding:12px 20px;font-family:'Poppins';font-weight:600;font-size:14px;cursor:pointer;transition:all .2s;" style-hover="background:var(--bg2);border-color:var(--lavender);">Probar con un ejemplo</button>
+                <button onClick="{{ start }}" style="display:inline-flex;align-items:center;gap:8px;background:var(--grad-btn);color:#fff;border:none;border-radius:50px;padding:13px 24px;font-family:'Poppins';font-weight:600;font-size:14.5px;cursor:pointer;box-shadow:0 12px 26px -10px rgba(120,94,220,.85);transition:transform .2s,box-shadow .2s;" style-hover="transform:translateY(-2px);box-shadow:0 18px 34px -10px rgba(120,94,220,.95);">Buscar fic</button>
+                <!-- <button onClick="{{ useExample }}" style="background:transparent;color:var(--violet);border:1.5px solid var(--glass-brd);border-radius:50px;padding:12px 20px;font-family:'Poppins';font-weight:600;font-size:14px;cursor:pointer;transition:all .2s;" style-hover="background:var(--bg2);border-color:var(--lavender);">Probar con un ejemplo</button> -->
               </div>
             </div>
           </sc-if>
@@ -235,16 +235,27 @@ class Component extends DCLogic {
   async start(){
     const url = (this.state.url || '').trim();
     if(!url){ this.setState({ screen:'error', errMsg:'Pega un enlace de AO3 primero.' }); return; }
+    if(!url.includes('archiveofourown.org/works/')){ this.setState({ screen:'error', errMsg:'El enlace debe ser de archiveofourown.org/works/…' }); return; }
     this.setState({ screen:'loading' });
+    const ctrl = new AbortController();
+    const timer = setTimeout(()=> ctrl.abort(), 120000);
     try{
       const fd = new FormData();
       fd.append('url', url);
-      const res = await fetch(`${API_BASE}/info`, { method:'POST', body:fd });
+      const res = await fetch(`${API_BASE}/info`, { method:'POST', body:fd, signal:ctrl.signal });
       const data = await res.json();
       if(!res.ok){ this.setState({ screen:'error', errMsg: data.detail || 'No se pudo obtener el fic.' }); return; }
       this.setState({ screen:'details', title:data.title, author:data.author });
     }catch(e){
-      this.setState({ screen:'error', errMsg:'Error de conexión con el servidor.' });
+      if(e.name === 'AbortError'){
+        this.setState({ screen:'error', errMsg:'La búsqueda tardó demasiado. AO3 puede estar lento — intenta de nuevo.' });
+      } else if(e.message && e.message.includes('fetch')){
+        this.setState({ screen:'error', errMsg:'No se pudo conectar con el servidor. ¿Está corriendo el backend?' });
+      } else {
+        this.setState({ screen:'error', errMsg:'Error inesperado. Intenta de nuevo.' });
+      }
+    } finally {
+      clearTimeout(timer);
     }
   }
 
@@ -263,11 +274,13 @@ class Component extends DCLogic {
 
   async generate(){
     this.setState({ screen:'generating' });
+    const ctrl = new AbortController();
+    const timer = setTimeout(()=> ctrl.abort(), 300000);
     try{
       const fd = new FormData();
       fd.append('url', this.state.url);
       if(this.state.coverFile) fd.append('cover', this.state.coverFile);
-      const res = await fetch(`${API_BASE}/convert`, { method:'POST', body:fd });
+      const res = await fetch(`${API_BASE}/convert`, { method:'POST', body:fd, signal:ctrl.signal });
       if(!res.ok){
         const data = await res.json();
         this.setState({ screen:'error', errMsg: data.detail || 'Error generando el EPUB.' });
@@ -279,13 +292,20 @@ class Component extends DCLogic {
       const epubName = match ? match[1] : (this.state.title || 'fic') + '.epub';
       if(this.state.epubUrl) URL.revokeObjectURL(this.state.epubUrl);
       const epubUrl = URL.createObjectURL(blob);
-      // Trigger automatic download
       const a = document.createElement('a');
       a.href = epubUrl; a.download = epubName;
       document.body.appendChild(a); a.click(); document.body.removeChild(a);
       this.setState({ screen:'done', epubUrl, epubName });
     }catch(e){
-      this.setState({ screen:'error', errMsg:'Error de conexión con el servidor.' });
+      if(e.name === 'AbortError'){
+        this.setState({ screen:'error', errMsg:'La generación tardó demasiado. El fic puede ser muy largo — intenta de nuevo.' });
+      } else if(e.message && e.message.includes('fetch')){
+        this.setState({ screen:'error', errMsg:'No se pudo conectar con el servidor. ¿Está corriendo el backend?' });
+      } else {
+        this.setState({ screen:'error', errMsg:'Error generando el EPUB. Intenta de nuevo.' });
+      }
+    } finally {
+      clearTimeout(timer);
     }
   }
 
