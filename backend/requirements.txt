@@ -4,3 +4,4 @@ ebooklib
 python-multipart
 requests
 beautifulsoup4
+pymupdf

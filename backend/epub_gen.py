@@ -1,11 +1,19 @@
 import io
 import os
+import posixpath
 import re
 import tempfile
+import zipfile
+from xml.etree import ElementTree as ET
 
 from ebooklib import epub
 
 from scraper import WorkData
+
+_OPF_NS = {
+    "c": "urn:oasis:names:tc:opendocument:xmlns:container",
+    "opf": "http://www.idpf.org/2007/opf",
+}
 
 KINDLE_CSS = """
 body {
@@ -90,3 +98,67 @@ def build_epub(work: WorkData, cover_bytes: bytes | None) -> bytes:
 
 def epub_filename(title: str) -> str:
     return _safe_filename(title) + ".epub"
+
+
+def _find_opf_path(zf: zipfile.ZipFile) -> str:
+    try:
+        container = ET.fromstring(zf.read("META-INF/container.xml"))
+    except KeyError as e:
+        raise ValueError("El archivo no parece un EPUB válido (falta container.xml).") from e
+    rootfile = container.find(".//c:rootfile", _OPF_NS)
+    if rootfile is None or not rootfile.get("full-path"):
+        raise ValueError("El archivo no parece un EPUB válido (container.xml sin rootfile).")
+    return rootfile.get("full-path")
+
+
+def _find_cover_image_path(zf: zipfile.ZipFile, opf_path: str) -> str:
+    opf_dir = posixpath.dirname(opf_path)
+    opf = ET.fromstring(zf.read(opf_path))
+    manifest = opf.find("opf:manifest", _OPF_NS)
+    metadata = opf.find("opf:metadata", _OPF_NS)
+
+    href = None
+    # EPUB3 convention: <item properties="cover-image" href="...">
+    for item in manifest.findall("opf:item", _OPF_NS):
+        if "cover-image" in (item.get("properties") or "").split():
+            href = item.get("href")
+            break
+
+    # EPUB2 fallback: <meta name="cover" content="item-id"/> pointing at a manifest item
+    if href is None and metadata is not None:
+        cover_id = next(
+            (m.get("content") for m in metadata.findall("opf:meta", _OPF_NS) if m.get("name") == "cover"),
+            None,
+        )
+        if cover_id:
+            href = next(
+                (item.get("href") for item in manifest.findall("opf:item", _OPF_NS) if item.get("id") == cover_id),
+                None,
+            )
+
+    if href is None:
+        raise ValueError("Este EPUB no tiene una portada declarada para reemplazar.")
+
+    return posixpath.normpath(posixpath.join(opf_dir, href))
+
+
+def replace_cover(epub_bytes: bytes, cover_bytes: bytes) -> bytes:
+    """Swaps the cover image file inside an EPUB's zip, leaving every other
+    entry byte-for-byte untouched (round-tripping through ebooklib's object
+    model instead can corrupt the NCX table of contents on rebuild)."""
+    try:
+        src = zipfile.ZipFile(io.BytesIO(epub_bytes))
+    except zipfile.BadZipFile as e:
+        raise ValueError("El archivo no parece un EPUB válido.") from e
+
+    with src:
+        opf_path = _find_opf_path(src)
+        cover_path = _find_cover_image_path(src, opf_path)
+
+        out_buf = io.BytesIO()
+        with zipfile.ZipFile(out_buf, "w") as dst:
+            for item in src.infolist():
+                data = cover_bytes if item.filename == cover_path else src.read(item.filename)
+                dst.writestr(item, data)
+
+    return out_buf.getvalue()

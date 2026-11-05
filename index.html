@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="./support.js"></script>
+</head>
+
+<body>
+  <x-dc>
+    <helmet>
+      <link rel="preconnect" href="https://fonts.googleapis.com">
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+      <link
+        href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&family=Fira+Code&display=swap"
+        rel="stylesheet">
+      <style>
+        :root {
+          --violet: #785edc;
+          --lavender: #a78fc9;
+          --bg: #f5f3fb;
+          --bg2: #ede8f8;
+          --card-bg: #ffffff;
+          --text: #1a1535;
+          --text-muted: #7a6e8a;
+          --text-soft: #b0a4c0;
+          --glass: rgba(255, 255, 255, .55);
+          --glass-brd: rgba(120, 94, 220, .16);
+          --shadow: 0 30px 80px -34px rgba(120, 94, 220, .5);
+          --grad-hero: linear-gradient(135deg, #a78fc9, #785edc, #b388ff);
+          --grad-btn: linear-gradient(135deg, #785edc, #9b7fe8);
+          --grad-prog: linear-gradient(90deg, #785edc, #a78fc9);
+        }
+
+        [data-theme="dark"] {
+          --bg: #0d0b14;
+          --bg2: #13101e;
+          --card-bg: #15111f;
+          --text: #feffff;
+          --text-muted: #9a8fb0;
+          --text-soft: #6a6080;
+          --glass: rgba(28, 22, 44, .5);
+          --glass-brd: rgba(160, 140, 220, .16);
+          --shadow: 0 30px 80px -30px rgba(0, 0, 0, .72);
+        }
+
+        * {
+          box-sizing: border-box;
+        }
+
+        body {
+          margin: 0;
+        }
+
+        @keyframes floaty {
+
+          0%,
+          100% {
+            transform: translate(0, 0)
+          }
+
+          50% {
+            transform: translate(26px, -30px)
+          }
+        }
+
+        @keyframes floaty2 {
+
+          0%,
+          100% {
+            transform: translate(0, 0)
+          }
+
+          50% {
+            transform: translate(-24px, 28px)
+          }
+        }
+
+        @keyframes fadeUp {
+          from {
+            opacity: 0;
+            transform: translateY(16px)
+          }
+
+          to {
+            opacity: 1;
+            transform: none
+          }
+        }
+
+        @keyframes spin {
+          to {
+            transform: rotate(360deg)
+          }
+        }
+
+        @keyframes marquee {
+          from {
+            transform: translateX(0)
+          }
+
+          to {
+            transform: translateX(-50%)
+          }
+        }
+
+        @keyframes bookfloat {
+
+          0%,
+          100% {
+            transform: rotateY(-20deg) translateY(0)
+          }
+
+          50% {
+            transform: rotateY(-20deg) translateY(-14px)
+          }
+        }
+
+        input::placeholder {
+          color: var(--text-soft);
+        }
+
+        *,
+        *::before,
+        *::after {
+          cursor: url('./img/cursor.png'), auto;
+        }
+      </style>
+    </helmet>
+
+    <div
+      style="min-height:100vh;position:relative;display:flex;flex-direction:column;background:var(--bg);color:var(--text);font-family:'Poppins',sans-serif;-webkit-font-smoothing:antialiased;transition:background .4s ease,color .4s ease;overflow-x:hidden;">
+
+      <div style="{{ noiseStyle }}"></div>
+
+      <div
+        style="position:sticky;top:0;z-index:50;height:72px;display:flex;align-items:center;justify-content:space-between;padding:0 32px;background:var(--glass);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);border-bottom:1px solid var(--glass-brd);">
+        <img src="./img/Logo.png" style="height:180px;width:auto;display:block;" />
+        <span
+          style="position:absolute;left:50%;transform:translateX(-50%);font-size:20px;font-weight:800;background:var(--grad-hero);-webkit-background-clip:text;background-clip:text;color:transparent;white-space:nowrap;">Bake
+          My Fic!</span>
+        <button onClick="{{ toggleTheme }}"
+          style="display:flex;align-items:center;gap:9px;background:var(--bg2);border:1px solid var(--glass-brd);border-radius:50px;padding:6px 9px 6px 15px;cursor:pointer;font-family:'Poppins';font-weight:600;font-size:12.5px;color:var(--text-muted);">
+          <span>Tema</span>
+          <span
+            style="width:40px;height:22px;border-radius:50px;background:var(--card-bg);border:1px solid var(--glass-brd);position:relative;display:inline-block;">
+            <span style="{{ knobStyle }}"></span>
+          </span>
+        </button>
+      </div>
+
+      <div
+        style="flex:1;position:relative;display:flex;align-items:center;justify-content:center;padding:56px 36px 96px;overflow:hidden;">
+        <div
+          style="position:absolute;width:420px;height:420px;border-radius:50%;background:var(--lavender);filter:blur(80px);opacity:.5;top:-120px;left:-90px;animation:floaty 16s ease-in-out infinite;pointer-events:none;">
+        </div>
+        <div
+          style="position:absolute;width:360px;height:360px;border-radius:50%;background:var(--violet);filter:blur(80px);opacity:.42;bottom:-40px;right:-80px;animation:floaty2 18s ease-in-out infinite;pointer-events:none;">
+        </div>
+
+        <div
+          style="position:relative;z-index:2;display:flex;gap:56px;align-items:center;width:100%;max-width:1000px;flex-wrap:wrap;justify-content:center;">
+
+          <div style="flex:0 0 320px;display:flex;flex-direction:column;align-items:center;gap:26px;">
+            <div style="text-align:center;">
+              <div
+                style="font-size:36px;font-weight:800;line-height:1.08;background:var(--grad-hero);-webkit-background-clip:text;background-clip:text;color:transparent;">
+                Horneamos<br> tu fic favorito.</div>
+              <p style="font-size:14.5px;color:var(--text-muted);line-height:1.6;margin:14px 0 0;max-width:300px;">Pega
+                el enlace de AO3, elige una portada y lo horneamos en EPUB listo para tu Kindle, PlayBook (google) o
+                cualquier otro lector.</p>
+            </div>
+            <div style="perspective:1300px;">
+              <div
+                style="position:relative;width:228px;height:320px;border-radius:3px 10px 10px 3px;overflow:hidden;animation:bookfloat 6.5s ease-in-out infinite;box-shadow:2px 0 0 #efeaf7,4px 0 0 #e7e0f1,6px 0 0 #ddd4ec,9px 1px 3px rgba(120,94,220,.3),0 36px 60px -18px rgba(80,60,160,.6);">
+                <sc-if value="{{ coverImg }}">{{ coverImgEl }}</sc-if>
+                <sc-if value="{{ noCover }}">
+                  <div style="position:absolute;inset:0;">
+                    <img src="./img/Portada Bunny.png" style="width:100%;height:100%;object-fit:cover;display:block;" />
+                    <sc-if value="{{ hasTitle }}">
+                      <div
+                        style="position:absolute;bottom:0;left:0;right:0;padding:20px 16px 18px;background:linear-gradient(to top,rgba(0,0,0,.65) 0%,transparent 100%);">
+                        <div style="font-weight:800;font-size:15px;line-height:1.25;color:#fff;text-wrap:balance;">{{
+                          title }}</div>
+                        <div style="font-size:11px;font-weight:500;color:rgba(255,255,255,.8);margin-top:4px;">{{ author
+                          }}</div>
+                      </div>
+                    </sc-if>
+                  </div>
+                </sc-if>
+                <div
+                  style="position:absolute;left:0;top:0;bottom:0;width:13px;background:linear-gradient(90deg,rgba(0,0,0,.3),transparent);">
+                </div>
+                <div
+                  style="position:absolute;inset:0;background:linear-gradient(115deg,rgba(255,255,255,.28),transparent 42%);pointer-events:none;">
+                </div>
+              </div>
+            </div>
+            <div style="font-size:12.5px;font-weight:600;color:var(--text-muted);text-align:center;">{{ caption }}</div>
+          </div>
+
+          <div
+            style="flex:1 1 400px;min-width:330px;max-width:480px;background:var(--glass);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);border:1px solid var(--glass-brd);border-radius:28px;box-shadow:var(--shadow);padding:32px 32px 34px;">
+
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+              <span
+                style="font-size:11.5px;font-weight:700;letter-spacing:1.5px;color:var(--violet);white-space:nowrap;">{{
+                stepLabel }}</span>
+              <span style="font-size:11.5px;font-weight:600;color:var(--text-soft);">{{ caption }}</span>
+            </div>
+
+            <div style="position:relative;margin-bottom:28px;">
+              <div
+                style="position:absolute;top:17px;left:17px;right:17px;height:3px;background:var(--bg2);border-radius:2px;overflow:hidden;">
+                <div
+                  style="height:100%;background:var(--grad-prog);border-radius:2px;transition:width .45s ease;width:{{ progress }};">
+                </div>
+              </div>
+              <div style="position:relative;display:flex;justify-content:space-between;">
+                <sc-for list="{{ nodes }}" as="node" hint-placeholder-count="4">
+                  <div style="display:flex;flex-direction:column;align-items:center;gap:7px;">
+                    <div style="{{ node.style }}">{{ node.face }}</div>
+                    <div style="{{ node.labelStyle }}">{{ node.label }}</div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+
+            <div style="min-height:198px;display:flex;flex-direction:column;justify-content:center;">
+
+              <sc-if value="{{ link }}" hint-placeholder-val="{{ true }}">
+                <div style="animation:fadeUp .5s ease both;">
+                  <div style="display:flex;gap:8px;margin-bottom:20px;background:var(--bg2);padding:5px;border-radius:50px;border:1px solid var(--glass-brd);">
+                    <button onClick="{{ setModeAo3 }}" style="{{ tabAo3Style }}">Desde AO3</button>
+                    <button onClick="{{ setModeEpub }}" style="{{ tabEpubStyle }}">Subir EPUB</button>
+                    <button onClick="{{ setModePdf }}" style="{{ tabPdfStyle }}">Subir PDF</button>
+                  </div>
+
+                  <sc-if value="{{ modeAo3 }}">
+                    <h3 style="font-size:21px;font-weight:700;margin:0 0 6px;color:var(--text);">Agrega el ingrediente
+                      principal
+                    </h3>
+                    <p style="font-size:14px;color:var(--text-muted);margin:0 0 18px;">Pega el enlace de AO3 y empezamos a
+                      preparar la masa.</p>
+                    <input value="{{ url }}" onChange="{{ onUrl }}" placeholder="https://archiveofourown.org/works/123456"
+                      style="width:100%;padding:15px 16px;border-radius:15px;border:1.5px solid var(--glass-brd);background:var(--card-bg);color:var(--text);font-family:'Poppins';font-size:14.5px;outline:none;transition:border-color .2s,box-shadow .2s;"
+                      style-focus="border-color:var(--violet);box-shadow:0 0 0 4px rgba(120,94,220,.14);" />
+                    <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;">
+                      <button onClick="{{ start }}"
+                        style="display:inline-flex;align-items:center;gap:8px;background:var(--grad-btn);color:#fff;border:none;border-radius:50px;padding:13px 24px;font-family:'Poppins';font-weight:600;font-size:14.5px;cursor:pointer;box-shadow:0 12px 26px -10px rgba(120,94,220,.85);transition:transform .2s,box-shadow .2s;"
+                        style-hover="transform:translateY(-2px);box-shadow:0 18px 34px -10px rgba(120,94,220,.95);">Buscar
+                        receta</button>
+                      <button onClick="{{ useExample }}"
+                        style="background:transparent;color:var(--violet);border:1.5px solid var(--glass-brd);border-radius:50px;padding:12px 20px;font-family:'Poppins';font-weight:600;font-size:14px;cursor:pointer;transition:all .2s;"
+                        style-hover="background:var(--bg2);border-color:var(--lavender);">Probar con un ejemplo</button>
+                    </div>
+                  </sc-if>
+
+                  <sc-if value="{{ modeEpub }}">
+                    <h3 style="font-size:21px;font-weight:700;margin:0 0 6px;color:var(--text);">Sube tu EPUB</h3>
+                    <p style="font-size:14px;color:var(--text-muted);margin:0 0 18px;">Sube el archivo .epub y te dejamos
+                      ponerle una portada nueva.</p>
+                    <label onDrop="{{ onEpubDrop }}" onDragOver="{{ onDragOver }}"
+                      style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;min-height:110px;padding:18px;border-radius:18px;border:2px dashed var(--glass-brd);background:var(--card-bg);cursor:pointer;transition:border-color .2s,background .2s;margin-bottom:16px;"
+                      style-hover="border-color:var(--violet);background:var(--bg2);">
+                      <input type="file" accept=".epub,application/epub+zip" onChange="{{ onEpubFile }}" style="display:none;" />
+                      <sc-if value="{{ hasEpubFile }}">
+                        <div style="font-size:13.5px;font-weight:600;color:var(--violet);word-break:break-all;">{{
+                          epubFileName }}</div>
+                        <div style="font-size:12px;color:var(--text-soft);">toca para cambiar</div>
+                      </sc-if>
+                      <sc-if value="{{ noEpubFile }}">
+                        <div
+                          style="width:42px;height:42px;border-radius:50%;background:var(--bg2);color:var(--violet);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;">
+                          ↑</div>
+                        <div style="font-size:14px;font-weight:600;color:var(--text);">Arrastra tu .epub o haz clic</div>
+                      </sc-if>
+                    </label>
+                    <button onClick="{{ continueEpub }}"
+                      style="display:inline-flex;align-items:center;gap:8px;background:var(--grad-btn);color:#fff;border:none;border-radius:50px;padding:13px 24px;font-family:'Poppins';font-weight:600;font-size:14.5px;cursor:pointer;box-shadow:0 12px 26px -10px rgba(120,94,220,.85);transition:transform .2s,box-shadow .2s;"
+                      style-hover="transform:translateY(-2px);box-shadow:0 18px 34px -10px rgba(120,94,220,.95);">Continuar</button>
+                  </sc-if>
+
+                  <sc-if value="{{ modePdf }}">
+                    <h3 style="font-size:21px;font-weight:700;margin:0 0 6px;color:var(--text);">Sube tu PDF</h3>
+                    <p style="font-size:14px;color:var(--text-muted);margin:0 0 18px;">Sube el .pdf, dinos título y
+                      autor (opcional) y te dejamos ponerle una portada.</p>
+                    <label onDrop="{{ onPdfDrop }}" onDragOver="{{ onDragOver }}"
+                      style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;min-height:110px;padding:18px;border-radius:18px;border:2px dashed var(--glass-brd);background:var(--card-bg);cursor:pointer;transition:border-color .2s,background .2s;margin-bottom:14px;"
+                      style-hover="border-color:var(--violet);background:var(--bg2);">
+                      <input type="file" accept=".pdf,application/pdf" onChange="{{ onPdfFile }}" style="display:none;" />
+                      <sc-if value="{{ hasPdfFile }}">
+                        <div style="font-size:13.5px;font-weight:600;color:var(--violet);word-break:break-all;">{{
+                          pdfFileName }}</div>
+                        <div style="font-size:12px;color:var(--text-soft);">toca para cambiar</div>
+                      </sc-if>
+                      <sc-if value="{{ noPdfFile }}">
+                        <div
+                          style="width:42px;height:42px;border-radius:50%;background:var(--bg2);color:var(--violet);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;">
+                          ↑</div>
+                        <div style="font-size:14px;font-weight:600;color:var(--text);">Arrastra tu .pdf o haz clic</div>
+                      </sc-if>
+                    </label>
+                    <input value="{{ pdfTitle }}" onChange="{{ onPdfTitle }}" placeholder="Título (opcional)"
+                      style="width:100%;padding:13px 16px;border-radius:15px;border:1.5px solid var(--glass-brd);background:var(--card-bg);color:var(--text);font-family:'Poppins';font-size:14px;outline:none;margin-bottom:10px;transition:border-color .2s,box-shadow .2s;"
+                      style-focus="border-color:var(--violet);box-shadow:0 0 0 4px rgba(120,94,220,.14);" />
+                    <input value="{{ pdfAuthor }}" onChange="{{ onPdfAuthor }}" placeholder="Autor/a (opcional)"
+                      style="width:100%;padding:13px 16px;border-radius:15px;border:1.5px solid var(--glass-brd);background:var(--card-bg);color:var(--text);font-family:'Poppins';font-size:14px;outline:none;margin-bottom:16px;transition:border-color .2s,box-shadow .2s;"
+                      style-focus="border-color:var(--violet);box-shadow:0 0 0 4px rgba(120,94,220,.14);" />
+                    <button onClick="{{ continuePdf }}"
+                      style="display:inline-flex;align-items:center;gap:8px;background:var(--grad-btn);color:#fff;border:none;border-radius:50px;padding:13px 24px;font-family:'Poppins';font-weight:600;font-size:14.5px;cursor:pointer;box-shadow:0 12px 26px -10px rgba(120,94,220,.85);transition:transform .2s,box-shadow .2s;"
+                      style-hover="transform:translateY(-2px);box-shadow:0 18px 34px -10px rgba(120,94,220,.95);">Continuar</button>
+                  </sc-if>
+                </div>
+              </sc-if>
+
+              <sc-if value="{{ loading }}">
+                <div
+                  style="display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center;animation:fadeUp .4s both;">
+                  <img src="./img/Cookie_loader.gif" style="width:96px;height:96px;object-fit:contain;" />
+                  <div style="font-weight:600;font-size:15px;color:var(--text);">Buscando los ingredientes…</div>
+                  <div style="font-size:13px;color:var(--text-muted);">Leyendo título y autor desde AO3</div>
+                </div>
+              </sc-if>
+
+              <sc-if value="{{ error }}">
+                <div
+                  style="display:flex;flex-direction:column;align-items:flex-start;gap:14px;animation:fadeUp .4s both;">
+                  <div
+                    style="width:44px;height:44px;border-radius:50%;background:rgba(255,95,87,.14);color:#ff5f57;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;">
+                    !</div>
+                  <div style="font-size:14.5px;color:var(--text);line-height:1.55;">{{ errMsg }}</div>
+                  <button onClick="{{ retry }}"
+                    style="background:transparent;color:var(--violet);border:1.5px solid var(--glass-brd);border-radius:50px;padding:11px 20px;font-family:'Poppins';font-weight:600;font-size:14px;cursor:pointer;"
+                    style-hover="background:var(--bg2);">Intentar de nuevo</button>
+                </div>
+              </sc-if>
+
+              <sc-if value="{{ details }}">
+                <div style="animation:fadeUp .5s both;">
+                  <div
+                    style="font-size:11.5px;font-weight:700;letter-spacing:1.5px;color:var(--violet);margin-bottom:12px;">
+                    RECETA ENCONTRADA</div>
+                  <div style="display:flex;gap:18px;align-items:center;margin-bottom:26px;">
+                    <div
+                      style="width:60px;height:84px;border-radius:8px;background:var(--grad-hero);box-shadow:0 12px 24px -10px rgba(120,94,220,.7);flex:none;">
+                    </div>
+                    <div>
+                      <div style="font-size:22px;font-weight:800;color:var(--text);line-height:1.2;">{{ title }}</div>
+                      <div style="font-size:15px;color:var(--text-muted);margin-top:4px;">por {{ author }}</div>
+                      <div
+                        style="margin-top:10px;display:inline-flex;align-items:center;font-size:11.5px;font-weight:600;color:var(--violet);background:var(--bg2);padding:5px 12px;border-radius:50px;">
+                        archiveofourown.org</div>
+                    </div>
+                  </div>
+                  <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                    <button onClick="{{ reset }}"
+                      style="background:transparent;color:var(--text-muted);border:1.5px solid var(--glass-brd);border-radius:50px;padding:12px 20px;font-family:'Poppins';font-weight:600;font-size:14px;cursor:pointer;"
+                      style-hover="background:var(--bg2);">Cambiar receta</button>
+                    <button onClick="{{ toCover }}"
+                      style="display:inline-flex;align-items:center;gap:8px;background:var(--grad-btn);color:#fff;border:none;border-radius:50px;padding:13px 24px;font-family:'Poppins';font-weight:600;font-size:14.5px;cursor:pointer;box-shadow:0 12px 26px -10px rgba(120,94,220,.85);transition:transform .2s;"
+                      style-hover="transform:translateY(-2px);">Decorar el pastel</button>
+                  </div>
+                </div>
+              </sc-if>
+              <sc-if value="{{ coverScreen }}">
+                <div style="animation:fadeUp .5s both;">
+                  <h3 style="font-size:21px;font-weight:700;margin:0 0 6px;color:var(--text);">Decora tu creación</h3>
+                  <p style="font-size:14px;color:var(--text-muted);margin:0 0 16px;">JPG o PNG. Vertical (2:3) queda
+                    mejor. Si no, yo lo pongo :)</p>
+                  <label onDrop="{{ onDrop }}" onDragOver="{{ onDragOver }}"
+                    style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;min-height:128px;padding:18px;border-radius:18px;border:2px dashed var(--glass-brd);background:var(--card-bg);cursor:pointer;transition:border-color .2s,background .2s;margin-bottom:16px;"
+                    style-hover="border-color:var(--violet);background:var(--bg2);">
+                    <input type="file" accept="image/*" onChange="{{ onFile }}" style="display:none;" />
+                    <sc-if value="{{ hasCover }}">
+                      <div style="font-size:13.5px;font-weight:600;color:var(--violet);">Imagen lista · toca para
+                        cambiar</div>
+                    </sc-if>
+                    <sc-if value="{{ noCover }}">
+                      <div
+                        style="width:42px;height:42px;border-radius:50%;background:var(--bg2);color:var(--violet);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;">
+                        ↑</div>
+                      <div style="font-size:14px;font-weight:600;color:var(--text);">Arrastra tu decoración o haz clic
+                      </div>
+                      <div style="font-size:12px;color:var(--text-soft);">la verás en la portada de la izquierda</div>
+                    </sc-if>
+                  </label>
+                  <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                    <button onClick="{{ backDetails }}"
+                      style="background:transparent;color:var(--text-muted);border:1.5px solid var(--glass-brd);border-radius:50px;padding:12px 18px;font-family:'Poppins';font-weight:600;font-size:14px;cursor:pointer;"
+                      style-hover="background:var(--bg2);">Atrás</button>
+                    <sc-if value="{{ hasCover }}"><button onClick="{{ removeCover }}"
+                        style="background:transparent;color:var(--text-soft);border:none;font-family:'Poppins';font-weight:600;font-size:13px;cursor:pointer;text-decoration:underline;">Quitar</button></sc-if>
+                    <button onClick="{{ generate }}"
+                      style="margin-left:auto;display:inline-flex;align-items:center;gap:8px;background:var(--grad-btn);color:#fff;border:none;border-radius:50px;padding:13px 24px;font-family:'Poppins';font-weight:600;font-size:14.5px;cursor:pointer;box-shadow:0 12px 26px -10px rgba(120,94,220,.85);transition:transform .2s;"
+                      style-hover="transform:translateY(-2px);">¡Al horno!</button>
+                  </div>
+                </div>
+              </sc-if>
+
+              <sc-if value="{{ generating }}">
+                <div
+                  style="display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center;animation:fadeUp .4s both;">
+                  <img src="./img/Cookie_loader.gif" style="width:96px;height:96px;object-fit:contain;" />
+                  <div style="font-weight:600;font-size:15px;color:var(--text);">Horneando tu fic…</div>
+                  <div style="font-size:13px;color:var(--text-muted);">Mezclando portada y capítulos</div>
+                </div>
+              </sc-if>
+
+              <sc-if value="{{ done }}">
+                <div style="animation:fadeUp .5s both;">
+                  <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+                    <div
+                      style="width:30px;height:30px;border-radius:50%;background:rgba(40,201,65,.15);color:#28c941;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;">
+                      ✓</div>
+                    <div style="font-size:17px;font-weight:700;color:var(--text);">¡Recién salido del horno!</div>
+                  </div>
+                  <div
+                    style="display:inline-flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:var(--text-muted);background:var(--bg2);padding:8px 14px;border-radius:50px;margin-bottom:18px;">
+                    {{ epubName }}</div>
+                  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:22px;">
+                    <button onClick="{{ downloadEpub }}"
+                      style="display:inline-flex;align-items:center;gap:8px;background:var(--grad-btn);color:#fff;border:none;border-radius:50px;padding:14px 28px;font-family:'Poppins';font-weight:600;font-size:15px;cursor:pointer;box-shadow:0 14px 30px -10px rgba(120,94,220,.9);transition:transform .2s;"
+                      style-hover="transform:translateY(-2px);">Descargar EPUB ↓</button>
+                    <button onClick="{{ reset }}"
+                      style="background:transparent;color:var(--text-muted);border:1.5px solid var(--glass-brd);border-radius:50px;padding:13px 22px;font-family:'Poppins';font-weight:600;font-size:14px;cursor:pointer;"
+                      style-hover="background:var(--bg2);">Hornear otro fic</button>
+                  </div>
+                  <div
+                    style="background:var(--bg2);border-radius:18px;padding:18px 20px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+                    <div style="font-size:13.5px;color:var(--text);line-height:1.5;">¡Tu fic está listo para servir!
+                      Súbelo a <strong>Send to Kindle</strong> y disfrútalo en tu dispositivo.</div>
+                    <a href="https://www.amazon.com.mx/sendtokindle" target="_blank" rel="noopener noreferrer"
+                      style="flex:none;display:inline-flex;align-items:center;gap:6px;color:var(--violet);font-size:13px;font-weight:700;text-decoration:none;white-space:nowrap;transition:opacity .2s;"
+                      style-hover="opacity:.7;">Ir a Send to Kindle ↗</a>
+                  </div>
+                </div>
+              </sc-if>
+
+            </div>
+          </div>
+        </div>
+
+
+
+      </div>
+  </x-dc>
+  <script type="text/x-dc" data-dc-script>
+// Cambia esta URL al subdominio de tu API cuando hagas deploy
+const API_BASE = 'https://bakemyfic-production.up.railway.app';
+
+class Component extends DCLogic {
+  state = { dark:false, screen:'link', mode:'ao3', url:'', title:'', author:'', cover:'', coverFile:null, errMsg:'', epubUrl:'', epubName:'', epubFile:null, epubFileName:'', pdfFile:null, pdfFileName:'', pdfTitle:'', pdfAuthor:'' };
+
+  componentDidMount(){
+    try{
+      const t = localStorage.getItem('cookie-theme');
+      const dark = t === 'dark';
+      this.setState({ dark });
+      document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+    }catch(e){ document.documentElement.dataset.theme = 'light'; }
+  }
+
+  componentWillUnmount(){
+    if(this.state.epubUrl) URL.revokeObjectURL(this.state.epubUrl);
+  }
+
+  toggleTheme = () => {
+    const dark = !this.state.dark;
+    this.setState({ dark });
+    document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+    try{ localStorage.setItem('cookie-theme', dark ? 'dark' : 'light'); }catch(e){}
+  };
+
+  async start(){
+    const url = (this.state.url || '').trim();
+    if(!url){ this.setState({ screen:'error', errMsg:'¡Falta el ingrediente principal! Pega un enlace de AO3.' }); return; }
+    this.setState({ screen:'loading' });
+    try{
+      const fd = new FormData();
+      fd.append('url', url);
+      const res = await fetch(`${API_BASE}/info`, { method:'POST', body:fd });
+      const data = await res.json();
+      if(!res.ok){ this.setState({ screen:'error', errMsg: data.detail || 'No encontramos esa receta.' }); return; }
+      this.setState({ screen:'details', title:data.title, author:data.author });
+    }catch(e){
+      this.setState({ screen:'error', errMsg:'¡El horno no responde! Revisa tu conexión.' });
+    }
+  }
+
+  useExample(){
+    this.setState({ url:'https://archiveofourown.org/works/44288963/chapters/111377393' });
+    setTimeout(()=> this.start(), 140);
+  }
+
+  setMode(mode){
+    if(mode === this.state.mode) return;
+    this.setState({ mode, url:'', title:'', author:'', epubFile:null, epubFileName:'', pdfFile:null, pdfFileName:'', pdfTitle:'', pdfAuthor:'', errMsg:'' });
+  }
+
+  onEpubFile(file){
+    if(!file) return;
+    if(!file.name.toLowerCase().endsWith('.epub')){
+      this.setState({ screen:'error', errMsg:'Ese archivo no es un .epub' });
+      return;
+    }
+    this.setState({ epubFile:file, epubFileName:file.name });
+  }
+
+  continueEpub(){
+    if(!this.state.epubFile){ this.setState({ screen:'error', errMsg:'Sube un archivo .epub primero.' }); return; }
+    this.setState({ screen:'cover' });
+  }
+
+  onPdfFile(file){
+    if(!file) return;
+    if(!file.name.toLowerCase().endsWith('.pdf')){
+      this.setState({ screen:'error', errMsg:'Ese archivo no es un .pdf' });
+      return;
+    }
+    const patch = { pdfFile:file, pdfFileName:file.name };
+    if(!this.state.pdfTitle) patch.pdfTitle = file.name.replace(/\.pdf$/i, '');
+    this.setState(patch);
+  }
+
+  continuePdf(){
+    if(!this.state.pdfFile){ this.setState({ screen:'error', errMsg:'Sube un archivo .pdf primero.' }); return; }
+    this.setState({ screen:'cover' });
+  }
+
+  onFile(file){
+    if(!file) return;
+    this.setState({ coverFile: file });
+    const r = new FileReader();
+    r.onload = ()=> this.setState({ cover: r.result });
+    r.readAsDataURL(file);
+  }
+
+  async generate(){
+    const mode = this.state.mode;
+    const isEpub = mode === 'epub';
+    const isPdf = mode === 'pdf';
+    if(isEpub && !this.state.coverFile){
+      this.setState({ screen:'error', errMsg:'Sube una portada nueva para tu EPUB.' });
+      return;
+    }
+    this.setState({ screen:'generating' });
+    try{
+      const fd = new FormData();
+      let res;
+      const coverFile = this.state.coverFile;
+      if(isEpub){
+        fd.append('epub', this.state.epubFile, this.state.epubFileName || 'fic.epub');
+        fd.append('cover', coverFile, 'portada.png');
+        res = await fetch(`${API_BASE}/cover`, { method:'POST', body:fd });
+      } else if(isPdf){
+        fd.append('pdf', this.state.pdfFile, this.state.pdfFileName || 'fic.pdf');
+        if(this.state.pdfTitle) fd.append('title', this.state.pdfTitle);
+        if(this.state.pdfAuthor) fd.append('author', this.state.pdfAuthor);
+        if(coverFile) fd.append('cover', coverFile, 'portada.png');
+        res = await fetch(`${API_BASE}/pdf-to-epub`, { method:'POST', body:fd });
+      } else {
+        fd.append('url', this.state.url);
+        if(coverFile) fd.append('cover', coverFile, 'portada.png');
+        res = await fetch(`${API_BASE}/convert`, { method:'POST', body:fd });
+      }
+      if(!res.ok){
+        const data = await res.json();
+        this.setState({ screen:'error', errMsg: data.detail || 'Algo salió mal en el horno.' });
+        return;
+      }
+      const blob = await res.blob();
+      const cd = res.headers.get('Content-Disposition') || '';
+      const match = cd.match(/filename="([^"]+)"/);
+      const fallbackName = isEpub ? (this.state.epubFileName || 'fic.epub')
+        : isPdf ? (this.state.pdfTitle || this.state.pdfFileName || 'fic') + '.epub'
+        : (this.state.title || 'fic') + '.epub';
+      const epubName = match ? match[1] : fallbackName;
+      if(this.state.epubUrl) URL.revokeObjectURL(this.state.epubUrl);
+      const epubUrl = URL.createObjectURL(blob);
+      // Trigger automatic download
+      const a = document.createElement('a');
+      a.href = epubUrl; a.download = epubName;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      this.setState({ screen:'done', epubUrl, epubName });
+    }catch(e){
+      this.setState({ screen:'error', errMsg:'¡El horno no responde! Revisa tu conexión.' });
+    }
+  }
+
+  _downloadEpub(){
+    if(!this.state.epubUrl) return;
+    const a = document.createElement('a');
+    a.href = this.state.epubUrl; a.download = this.state.epubName;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  }
+
+  _reset(){
+    if(this.state.epubUrl) URL.revokeObjectURL(this.state.epubUrl);
+    this.setState({ screen:'link', url:'', title:'', author:'', cover:'', coverFile:null, errMsg:'', epubUrl:'', epubName:'', epubFile:null, epubFileName:'', pdfFile:null, pdfFileName:'', pdfTitle:'', pdfAuthor:'' });
+  }
+
+  renderVals(){
+    const sc = this.state.screen;
+    const mode = this.state.mode;
+    const isEpub = mode === 'epub';
+    const isPdf = mode === 'pdf';
+    const stepMaps = {
+      ao3: { link:1, loading:1, error:1, details:2, cover:3, generating:3, done:4 },
+      epub: { link:1, error:1, cover:2, generating:2, done:3 },
+      pdf: { link:1, error:1, cover:2, generating:2, done:3 },
+    };
+    const captionMaps = {
+      ao3: { link:'Esperando ingredientes', loading:'Buscando en AO3…', error:'Revisa la receta', details:'Ingredientes listos', cover:'Hora de decorar', generating:'En el horno…', done:'Listo para servir' },
+      epub: { link:'Esperando el EPUB', error:'Revisa el archivo', cover:'Hora de decorar', generating:'En el horno…', done:'Listo para servir' },
+      pdf: { link:'Esperando el PDF', error:'Revisa el archivo', cover:'Hora de decorar', generating:'En el horno…', done:'Listo para servir' },
+    };
+    const labelsMap = {
+      ao3: ['Receta','Ingredientes','Decoración','Servir'],
+      epub: ['Receta','Decoración','Servir'],
+      pdf: ['Receta','Decoración','Servir'],
+    };
+    const stepMap = stepMaps[mode];
+    const captionMap = captionMaps[mode];
+    const labels = labelsMap[mode];
+    const step = stepMap[sc];
+    const hasCover = !!this.state.cover;
+    const hasTitle = !!this.state.title;
+    const hasEpubFile = !!this.state.epubFile;
+    const hasPdfFile = !!this.state.pdfFile;
+
+    const tabStyleBase = "flex:1;padding:9px 14px;border:none;border-radius:50px;font-family:'Poppins';font-weight:600;font-size:13px;cursor:pointer;transition:all .2s;";
+    const tabActive = tabStyleBase + "background:var(--grad-btn);color:#fff;";
+    const tabInactive = tabStyleBase + "background:transparent;color:var(--text-muted);";
+
+    const nodes = labels.map((label, i) => {
+      const n = i + 1;
+      const st = n < step ? 'done' : (n === step ? 'active' : 'todo');
+      let circle;
+      if(st === 'todo') circle = { background:'var(--card-bg)', color:'var(--text-soft)', border:'1.5px solid var(--glass-brd)' };
+      else circle = { background:'var(--grad-btn)', color:'#fff', border:'none', boxShadow:'0 6px 16px -6px rgba(120,94,220,.75)' };
+      return {
+        n, label,
+        face: st === 'done' ? '✓' : String(n),
+        style: { display:'flex', alignItems:'center', justifyContent:'center', borderRadius:'50%', fontFamily:"'Poppins',sans-serif", fontWeight:700, transition:'all .3s', flex:'none', width:'34px', height:'34px', fontSize:'14px', ...circle },
+        labelStyle: { fontSize:'11.5px', fontWeight: st === 'active' ? 700 : 500, color: st === 'todo' ? 'var(--text-soft)' : 'var(--text-muted)', transition:'color .3s', letterSpacing:'.2px' }
+      };
+    });
+
+    const noiseUri = "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")";
+
+    return {
+      dark: this.state.dark,
+      toggleTheme: this.toggleTheme,
+      knobStyle: { position:'absolute', top:'2px', left:'2px', width:'16px', height:'16px', borderRadius:'50%', background:'var(--grad-btn)', transition:'transform .3s', transform: this.state.dark ? 'translateX(18px)' : 'translateX(0)' },
+      noiseStyle: { position:'fixed', inset:0, pointerEvents:'none', zIndex:1, opacity:0.05, mixBlendMode:'overlay', backgroundImage: noiseUri },
+      url: this.state.url, title: this.state.title, author: this.state.author, cover: this.state.cover,
+      errMsg: this.state.errMsg, epubName: this.state.epubName,
+      step, stepLabel: 'Paso ' + step + ' de ' + labels.length + ' 🍪', progress: (((step - 1) / (labels.length - 1)) * 100) + '%', caption: captionMap[sc],
+      link: sc === 'link', loading: sc === 'loading', error: sc === 'error',
+      details: sc === 'details', coverScreen: sc === 'cover', generating: sc === 'generating', done: sc === 'done',
+      hasCover, noCover: !hasCover, hasTitle,
+      coverImg: hasCover,
+      coverImgEl: React.createElement('img', { src: this.state.cover, style: { width:'100%', height:'100%', objectFit:'cover', display:'block' } }),
+      nodes,
+      mode, modeAo3: mode === 'ao3', modeEpub: isEpub, modePdf: isPdf,
+      tabAo3Style: mode === 'ao3' ? tabActive : tabInactive,
+      tabEpubStyle: isEpub ? tabActive : tabInactive,
+      tabPdfStyle: isPdf ? tabActive : tabInactive,
+      setModeAo3: () => this.setMode('ao3'),
+      setModeEpub: () => this.setMode('epub'),
+      setModePdf: () => this.setMode('pdf'),
+      epubFileName: this.state.epubFileName, hasEpubFile, noEpubFile: !hasEpubFile,
+      onEpubFile: e => this.onEpubFile(e.target.files && e.target.files[0]),
+      onEpubDrop: e => { e.preventDefault(); const f = e.dataTransfer.files && e.dataTransfer.files[0]; this.onEpubFile(f); },
+      continueEpub: () => this.continueEpub(),
+      pdfFileName: this.state.pdfFileName, hasPdfFile, noPdfFile: !hasPdfFile,
+      pdfTitle: this.state.pdfTitle, pdfAuthor: this.state.pdfAuthor,
+      onPdfFile: e => this.onPdfFile(e.target.files && e.target.files[0]),
+      onPdfDrop: e => { e.preventDefault(); const f = e.dataTransfer.files && e.dataTransfer.files[0]; this.onPdfFile(f); },
+      onPdfTitle: e => this.setState({ pdfTitle: e.target.value }),
+      onPdfAuthor: e => this.setState({ pdfAuthor: e.target.value }),
+      continuePdf: () => this.continuePdf(),
+      onUrl: e => this.setState({ url: e.target.value }),
+      start: () => this.start(),
+      retry: () => this.setState({ screen:'link', errMsg:'' }),
+      useExample: () => this.useExample(),
+      toCover: () => this.setState({ screen:'cover' }),
+      backDetails: () => this.setState({ screen: mode === 'ao3' ? 'details' : 'link' }),
+      generate: () => this.generate(),
+      reset: () => this._reset(),
+      removeCover: () => this.setState({ cover:'', coverFile:null }),
+      downloadEpub: () => this._downloadEpub(),
+      onFile: e => this.onFile(e.target.files && e.target.files[0]),
+      onDrop: e => { e.preventDefault(); const f = e.dataTransfer.files && e.dataTransfer.files[0]; this.onFile(f); },
+      onDragOver: e => e.preventDefault()
+    };
+  }
+}
+</script>
+</body>
+
+</html>

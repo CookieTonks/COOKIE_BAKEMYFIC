@@ -4,11 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this project is
 
-A single-page web app ("Cookie AO3 → EPUB") that lets users paste an AO3 fanfic URL, optionally upload a cover image, and download the fic as an EPUB for Kindle. The UI is fully functional visually; the actual AO3 fetch and EPUB generation are currently simulated with `setTimeout`.
+A single-page web app ("Bake My Fic!") that lets users paste an AO3 fanfic URL, optionally upload a cover image, and download the fic as an EPUB for Kindle. The UI is fully functional visually; the actual AO3 fetch and EPUB generation are currently simulated with `setTimeout`.
 
 ## How to run
 
-Open `Cookie AO3 to EPUB.dc.html` directly in a browser (no build step needed). The file loads `support.js` from the same directory, which pulls React 18 from unpkg at runtime.
+Open `home.html` directly in a browser (no build step needed). The file loads `support.js` from the same directory, which pulls React 18 from unpkg at runtime.
 
 ## Architecture
 
