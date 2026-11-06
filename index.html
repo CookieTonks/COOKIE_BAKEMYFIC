@@ -203,6 +203,19 @@
           <div
             style="flex:1 1 400px;min-width:330px;max-width:480px;background:var(--glass);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);border:1px solid var(--glass-brd);border-radius:28px;box-shadow:var(--shadow);padding:32px 32px 34px;">
 
+            <sc-if value="{{ inAppBrowser }}">
+              <div role="alert"
+                style="background:var(--bg2);border:1px solid var(--glass-brd);border-radius:18px;padding:14px 16px;margin-bottom:18px;font-size:13px;color:var(--text);line-height:1.5;">
+                <strong>Ábrelo en Safari o Chrome para poder descargar tu fic.</strong>
+                El navegador de esta app puede bloquear las descargas. Copia el enlace
+                (<strong>{{ siteHost }}</strong>) o busca “Abrir en el navegador” en el menú ⋯ de la app.
+                <div style="margin-top:10px;">
+                  <button onClick="{{ copyLink }}"
+                    style="background:var(--grad-btn);color:#fff;border:none;border-radius:50px;padding:9px 18px;font-family:'Poppins';font-weight:600;font-size:13px;cursor:pointer;">{{ copyLabel }}</button>
+                </div>
+              </div>
+            </sc-if>
+
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
               <span
                 style="font-size:11.5px;font-weight:700;letter-spacing:1.5px;color:var(--violet);white-space:nowrap;">{{
@@ -459,7 +472,11 @@ const API_BASE = 'https://bakemyfic-production.up.railway.app';
 const isIOS = () => /iPad|iPhone|iPod/.test(navigator.userAgent)
   || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
+// Navegadores internos de apps, donde las descargas suelen estar bloqueadas.
+const isInAppBrowser = () => /Instagram|FBAN|FBAV|FB_IAB|Threads|Barcelona|TikTok|BytedanceWebview|musical_ly/i.test(navigator.userAgent);
+
 const DOWNLOAD_MSGS = {
+  inApp: 'Si no se descargó, abre esta página en Safari o Chrome y hornéalo otra vez.',
   started: 'Tu descarga comenzó. Búscala en tu carpeta de Descargas.',
   iosReady: 'Toca “Descargar EPUB” y elige “Guardar en Archivos”.',
   iosSaved: '¡Listo! Si lo guardaste en Archivos, ahí lo encuentras.',
@@ -468,7 +485,7 @@ const DOWNLOAD_MSGS = {
 };
 
 class Component extends DCLogic {
-  state = { dark:false, screen:'link', mode:'ao3', url:'', title:'', author:'', cover:'', coverFile:null, errMsg:'', epubUrl:'', epubName:'', downloadMsg:'', epubFile:null, epubFileName:'', pdfFile:null, pdfFileName:'', pdfTitle:'', pdfAuthor:'' };
+  state = { dark:false, screen:'link', mode:'ao3', url:'', title:'', author:'', cover:'', coverFile:null, errMsg:'', epubUrl:'', epubName:'', downloadMsg:'', copyLabel:'Copiar enlace', epubFile:null, epubFileName:'', pdfFile:null, pdfFileName:'', pdfTitle:'', pdfAuthor:'' };
 
   componentDidMount(){
     try{
@@ -599,10 +616,10 @@ class Component extends DCLogic {
       this._epubBlob = blob;
       // iOS exige un toque del usuario para guardar el archivo.
       if(isIOS()){
-        this.setState({ screen:'done', epubUrl, epubName, downloadMsg:DOWNLOAD_MSGS.iosReady });
+        this.setState({ screen:'done', epubUrl, epubName, downloadMsg:isInAppBrowser() ? DOWNLOAD_MSGS.inApp : DOWNLOAD_MSGS.iosReady });
       } else {
         this._saveEpub(epubUrl, epubName);
-        this.setState({ screen:'done', epubUrl, epubName, downloadMsg:DOWNLOAD_MSGS.started });
+        this.setState({ screen:'done', epubUrl, epubName, downloadMsg:isInAppBrowser() ? DOWNLOAD_MSGS.inApp : DOWNLOAD_MSGS.started });
       }
     }catch(e){
       this.setState({ screen:'error', errMsg:'¡El horno no responde! Revisa tu conexión.' });
@@ -620,7 +637,7 @@ class Component extends DCLogic {
     if(!epubUrl) return;
     if(!isIOS()){
       this._saveEpub(epubUrl, epubName);
-      this.setState({ downloadMsg:DOWNLOAD_MSGS.started });
+      this.setState({ downloadMsg:isInAppBrowser() ? DOWNLOAD_MSGS.inApp : DOWNLOAD_MSGS.started });
       return;
     }
     const file = new File([this._epubBlob], epubName, { type:'application/epub+zip' });
@@ -637,7 +654,16 @@ class Component extends DCLogic {
       }
     }
     this._saveEpub(epubUrl, epubName);
-    this.setState({ downloadMsg:DOWNLOAD_MSGS.iosFallback });
+    this.setState({ downloadMsg:isInAppBrowser() ? DOWNLOAD_MSGS.inApp : DOWNLOAD_MSGS.iosFallback });
+  }
+
+  async _copyLink(){
+    try{
+      await navigator.clipboard.writeText(location.origin + location.pathname);
+      this.setState({ copyLabel:'¡Enlace copiado!' });
+    }catch(e){
+      this.setState({ copyLabel:'No se pudo copiar, escríbelo en Safari' });
+    }
   }
 
   _reset(){
@@ -702,6 +728,7 @@ class Component extends DCLogic {
       noiseStyle: { position:'fixed', inset:0, pointerEvents:'none', zIndex:1, opacity:0.05, mixBlendMode:'overlay', backgroundImage: noiseUri },
       url: this.state.url, title: this.state.title, author: this.state.author, cover: this.state.cover,
       errMsg: this.state.errMsg, epubName: this.state.epubName, downloadMsg: this.state.downloadMsg,
+      inAppBrowser: isInAppBrowser(), siteHost: location.host, copyLabel: this.state.copyLabel, copyLink: () => this._copyLink(),
       step, stepLabel: 'Paso ' + step + ' de ' + labels.length + ' 🍪', progress: (((step - 1) / (labels.length - 1)) * 100) + '%', caption: captionMap[sc],
       link: sc === 'link', loading: sc === 'loading', error: sc === 'error',
       details: sc === 'details', coverScreen: sc === 'cover', generating: sc === 'generating', done: sc === 'done',
