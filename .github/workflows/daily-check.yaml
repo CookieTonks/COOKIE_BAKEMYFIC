@@ -1,0 +1,60 @@
+name: Revision diaria
+
+on:
+  schedule:
+    - cron: "0 15 * * *" # 9:00 a. m. hora del centro de Mexico (GitHub puede retrasarlo)
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+  statuses: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Revisar el sitio
+        id: site
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          REPORT_FILE: report.md
+        run: python3 .github/scripts/check_site.py
+
+      - name: Avisar en el issue de estado
+        env:
+          GH_TOKEN: ${{ github.token }}
+          OUTCOME: ${{ steps.site.outcome }}
+          OWNER: ${{ github.repository_owner }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          TITLE="Estado diario de Bake My Fic"
+          NUMBER=$(gh issue list --state open --search "\"$TITLE\" in:title" --json number,title \
+            --jq "map(select(.title == \"$TITLE\")) | .[0].number // empty")
+          if [ -z "$NUMBER" ]; then
+            URL=$(gh issue create --title "$TITLE" \
+              --body "La revision diaria publica aqui su resultado. Cierra este issue para empezar uno nuevo.")
+            NUMBER=${URL##*/}
+          fi
+
+          if [ "$OUTCOME" = "success" ]; then
+            HEADER="✅ Todo funcionando"
+          else
+            HEADER="❌ Algo fallo"
+          fi
+
+          {
+            echo "@$OWNER $HEADER"
+            echo
+            cat report.md
+            echo
+            echo "[Ver la ejecucion]($RUN_URL)"
+          } > comment.md
+          gh issue comment "$NUMBER" --body-file comment.md
+
+      - name: Marcar la ejecucion como fallida
+        if: steps.site.outcome != 'success'
+        run: exit 1
