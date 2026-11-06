@@ -427,6 +427,11 @@
                       style="background:transparent;color:var(--text-muted);border:1.5px solid var(--glass-brd);border-radius:50px;padding:13px 22px;font-family:'Poppins';font-weight:600;font-size:14px;cursor:pointer;"
                       style-hover="background:var(--bg2);">Hornear otro fic</button>
                   </div>
+                  <sc-if value="{{ downloadMsg }}">
+                    <div role="status"
+                      style="font-size:13px;font-weight:600;color:var(--text);line-height:1.5;margin:-8px 0 22px;">
+                      {{ downloadMsg }}</div>
+                  </sc-if>
                   <div
                     style="background:var(--bg2);border-radius:18px;padding:18px 20px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
                     <div style="font-size:13.5px;color:var(--text);line-height:1.5;">¡Tu fic está listo para servir!
@@ -450,8 +455,20 @@
 // Cambia esta URL al subdominio de tu API cuando hagas deploy
 const API_BASE = 'https://bakemyfic-production.up.railway.app';
 
+// iPadOS se identifica como Mac, por eso tambien se revisa la pantalla tactil.
+const isIOS = () => /iPad|iPhone|iPod/.test(navigator.userAgent)
+  || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+const DOWNLOAD_MSGS = {
+  started: 'Tu descarga comenzó. Búscala en tu carpeta de Descargas.',
+  iosReady: 'Toca “Descargar EPUB” y elige “Guardar en Archivos”.',
+  iosSaved: '¡Listo! Si lo guardaste en Archivos, ahí lo encuentras.',
+  iosCancelled: 'No se guardó. Toca “Descargar EPUB” para intentarlo otra vez.',
+  iosFallback: 'Busca tu fic en la app Archivos, en Descargas. Si no aparece, abre esta página en Safari e inténtalo de nuevo.',
+};
+
 class Component extends DCLogic {
-  state = { dark:false, screen:'link', mode:'ao3', url:'', title:'', author:'', cover:'', coverFile:null, errMsg:'', epubUrl:'', epubName:'', epubFile:null, epubFileName:'', pdfFile:null, pdfFileName:'', pdfTitle:'', pdfAuthor:'' };
+  state = { dark:false, screen:'link', mode:'ao3', url:'', title:'', author:'', cover:'', coverFile:null, errMsg:'', epubUrl:'', epubName:'', downloadMsg:'', epubFile:null, epubFileName:'', pdfFile:null, pdfFileName:'', pdfTitle:'', pdfAuthor:'' };
 
   componentDidMount(){
     try{
@@ -579,26 +596,54 @@ class Component extends DCLogic {
       const epubName = match ? match[1] : fallbackName;
       if(this.state.epubUrl) URL.revokeObjectURL(this.state.epubUrl);
       const epubUrl = URL.createObjectURL(blob);
-      // Trigger automatic download
-      const a = document.createElement('a');
-      a.href = epubUrl; a.download = epubName;
-      document.body.appendChild(a); a.click(); document.body.removeChild(a);
-      this.setState({ screen:'done', epubUrl, epubName });
+      this._epubBlob = blob;
+      // iOS exige un toque del usuario para guardar el archivo.
+      if(isIOS()){
+        this.setState({ screen:'done', epubUrl, epubName, downloadMsg:DOWNLOAD_MSGS.iosReady });
+      } else {
+        this._saveEpub(epubUrl, epubName);
+        this.setState({ screen:'done', epubUrl, epubName, downloadMsg:DOWNLOAD_MSGS.started });
+      }
     }catch(e){
       this.setState({ screen:'error', errMsg:'¡El horno no responde! Revisa tu conexión.' });
     }
   }
 
-  _downloadEpub(){
-    if(!this.state.epubUrl) return;
+  _saveEpub(epubUrl, epubName){
     const a = document.createElement('a');
-    a.href = this.state.epubUrl; a.download = this.state.epubName;
+    a.href = epubUrl; a.download = epubName;
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  }
+
+  async _downloadEpub(){
+    const { epubUrl, epubName } = this.state;
+    if(!epubUrl) return;
+    if(!isIOS()){
+      this._saveEpub(epubUrl, epubName);
+      this.setState({ downloadMsg:DOWNLOAD_MSGS.started });
+      return;
+    }
+    const file = new File([this._epubBlob], epubName, { type:'application/epub+zip' });
+    if(navigator.canShare && navigator.canShare({ files:[file] })){
+      try{
+        await navigator.share({ files:[file] });
+        this.setState({ downloadMsg:DOWNLOAD_MSGS.iosSaved });
+        return;
+      }catch(e){
+        if(e.name === 'AbortError'){
+          this.setState({ downloadMsg:DOWNLOAD_MSGS.iosCancelled });
+          return;
+        }
+      }
+    }
+    this._saveEpub(epubUrl, epubName);
+    this.setState({ downloadMsg:DOWNLOAD_MSGS.iosFallback });
   }
 
   _reset(){
     if(this.state.epubUrl) URL.revokeObjectURL(this.state.epubUrl);
-    this.setState({ screen:'link', url:'', title:'', author:'', cover:'', coverFile:null, errMsg:'', epubUrl:'', epubName:'', epubFile:null, epubFileName:'', pdfFile:null, pdfFileName:'', pdfTitle:'', pdfAuthor:'' });
+    this._epubBlob = null;
+    this.setState({ screen:'link', url:'', title:'', author:'', cover:'', coverFile:null, errMsg:'', epubUrl:'', epubName:'', downloadMsg:'', epubFile:null, epubFileName:'', pdfFile:null, pdfFileName:'', pdfTitle:'', pdfAuthor:'' });
   }
 
   renderVals(){
@@ -656,7 +701,7 @@ class Component extends DCLogic {
       knobStyle: { position:'absolute', top:'2px', left:'2px', width:'16px', height:'16px', borderRadius:'50%', background:'var(--grad-btn)', transition:'transform .3s', transform: this.state.dark ? 'translateX(18px)' : 'translateX(0)' },
       noiseStyle: { position:'fixed', inset:0, pointerEvents:'none', zIndex:1, opacity:0.05, mixBlendMode:'overlay', backgroundImage: noiseUri },
       url: this.state.url, title: this.state.title, author: this.state.author, cover: this.state.cover,
-      errMsg: this.state.errMsg, epubName: this.state.epubName,
+      errMsg: this.state.errMsg, epubName: this.state.epubName, downloadMsg: this.state.downloadMsg,
       step, stepLabel: 'Paso ' + step + ' de ' + labels.length + ' 🍪', progress: (((step - 1) / (labels.length - 1)) * 100) + '%', caption: captionMap[sc],
       link: sc === 'link', loading: sc === 'loading', error: sc === 'error',
       details: sc === 'details', coverScreen: sc === 'cover', generating: sc === 'generating', done: sc === 'done',
