@@ -65,9 +65,11 @@ def _fetch_html(work_id: int) -> str:
                 continue
             raise RuntimeError("AO3 está limitando las peticiones. Espera unos segundos e inténtalo de nuevo.")
 
-        if r.status_code in (503, 502):
+        # 502/503/504 = AO3 caído o saturado; 520-526 = errores intermitentes
+        # de Cloudflare (p. ej. 525 handshake SSL fallido) que suelen pasar al reintentar.
+        if r.status_code in (502, 503, 504) or 520 <= r.status_code <= 526:
             if attempt < 2:
-                time.sleep(10)
+                time.sleep(10 if r.status_code < 520 else 3)
                 continue
             raise RuntimeError(f"AO3 no está disponible en este momento (HTTP {r.status_code}). Intenta más tarde.")
 
